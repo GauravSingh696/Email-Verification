@@ -1,8 +1,8 @@
 // src/pages/Signup.jsx
 import { useState } from "react";
 import { FaRegCalendarAlt } from "react-icons/fa";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import API, { signup } from "../api";
 
 const SignUp = () => {
   const [name, setName] = useState("");
@@ -17,7 +17,7 @@ const SignUp = () => {
     if (!email) return alert("Enter email");
     setIsSubmitting(true);
     try {
-      const res = await axios.post("http://localhost:8080/sendEmail", { email });
+      const res = await API.post("/sendEmail", { email });
       if (res.data.Success) {
         setStep("otp");
       } else {
@@ -31,21 +31,36 @@ const SignUp = () => {
     }
   };
 
+  // inside handleVerify of SignUp.jsx
+
   const handleVerify = async () => {
     if (!otp) return alert("Enter OTP");
+    setIsSubmitting(true);
     try {
-      const body = { email, otp, name, dob };
-      const res = await axios.post("http://localhost:8080/verifyOtp", body);
-      if (res.data.Success) {
-        // store user in localStorage and go to dashboard
-        window.localStorage.setItem("hd_user", JSON.stringify(res.data.user));
-        navigate("/dashboard");
+      // First, verify the OTP
+      const verifyRes = await API.post("/verifyOtp", { email, otp });
+      if (verifyRes.data.Success && verifyRes.data.newUser) {
+        // If OTP is valid and it's a new user, create the account
+        const signupRes = await signup({ name, email, dob });
+
+        if (signupRes.data.Success) {
+          window.localStorage.setItem("hd_user", JSON.stringify(signupRes.data.user));
+          navigate("/dashboard");
+        } else {
+          alert(signupRes.data.msg || "Failed to create user.");
+        }
+      } else if (verifyRes.data.Success && !verifyRes.data.newUser) {
+        // This case means the user already exists, so they should sign in
+        alert("An account with this email already exists. Please sign in.");
+        navigate("/signin");
       } else {
-        alert(res.data.msg || "OTP invalid");
+        alert(verifyRes.data.msg || "OTP invalid");
       }
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.msg || "Verification failed");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

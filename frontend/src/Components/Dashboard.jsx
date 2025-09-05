@@ -1,8 +1,10 @@
 // src/pages/Dashboard.jsx
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router";
 import { MdDeleteForever } from "react-icons/md";
+import { getNotes } from "../api"; // adjust path if needed
+import { createNote as apiCreateNote, deleteNote as apiDeleteNote } from "../api"; // adjust path if needed
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -25,17 +27,18 @@ const Dashboard = () => {
 
   const fetchNotes = async (userId) => {
     try {
-      const res = await axios.get(`http://localhost:8080/notes?userId=${userId}`);
+      const res = await getNotes(userId);
       if (res.data.Success) setNotes(res.data.notes);
     } catch (err) {
       console.error(err);
     }
   };
 
+
   const createNote = async () => {
     if (!title) return alert("Enter note title");
     try {
-      const res = await axios.post("http://localhost:8080/notes", {
+      const res = await apiCreateNote({
         userId: user.id,
         title,
         content: "",
@@ -53,12 +56,14 @@ const Dashboard = () => {
 
   const deleteNote = async (id) => {
     try {
-      await axios.delete(`http://localhost:8080/notes/${id}`);
+      await apiDeleteNote(id);
       fetchNotes(user.id);
     } catch (err) {
       console.error(err);
+      alert("Error deleting note");
     }
   };
+
 
   const signOut = () => {
     localStorage.removeItem("hd_user");
@@ -102,7 +107,7 @@ const Dashboard = () => {
           {notes.map(note => (
             <div key={note.id} className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm">
               <div>{note.title}</div>
-              <button onClick={() => deleteNote(note.id)} className="cursor-pointer"><MdDeleteForever className="size-7"/></button>
+              <button onClick={() => deleteNote(note.id)} className="cursor-pointer"><MdDeleteForever className="size-7" /></button>
             </div>
           ))}
           {notes.length === 0 && <div className="text-gray-500">No notes yet</div>}

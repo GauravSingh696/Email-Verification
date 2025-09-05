@@ -1,6 +1,6 @@
 // src/pages/Signin.jsx
 import { useState } from "react";
-import axios from "axios";
+import API from "../api";
 import { useNavigate } from "react-router-dom";
 
 const Signin = () => {
@@ -14,9 +14,12 @@ const Signin = () => {
         if (!email) return alert("Enter email");
         setIsSubmitting(true);
         try {
-            const res = await axios.post("http://localhost:8080/sendEmail", { email });
-            if (res.data.Success) setStep("otp");
-            else alert("Failed to send OTP");
+            const res = await API.post("/sendEmail", { email }); // ✅ use API wrapper
+            if (res.data.Success) {
+                setStep("otp");
+            } else {
+                alert("Failed to send OTP");
+            }
         } catch (err) {
             console.error(err);
             alert("Error sending OTP");
@@ -25,11 +28,13 @@ const Signin = () => {
         }
     };
 
+    // Verify OTP
     const verify = async () => {
         if (!otp) return alert("Enter OTP");
         try {
-            const res = await axios.post("http://localhost:8080/verifyOtp", { email, otp });
+            const res = await API.post("/verifyOtp", { email, otp }); // ✅ use API wrapper
             if (res.data.Success) {
+                // save user in localStorage
                 window.localStorage.setItem("hd_user", JSON.stringify(res.data.user));
                 navigate("/dashboard");
             } else {
