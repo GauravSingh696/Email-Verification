@@ -1,23 +1,18 @@
 import express from "express";
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
 import sendEmail from "./sendEmail.js";
 import cors from "cors";
 import { pool } from "./db.js";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors()); // Good to keep for local development
+app.use(cors());
 
-// --- initialize DB tables if not exists ---
+// --- Initialize DB tables if they don't exist ---
 async function initDb() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -59,7 +54,7 @@ initDb().catch((err) => {
 
 // --- API ---
 
-// Health
+// Health Check
 app.get("/api/ping", (req, res) => res.json({ ok: true }));
 
 // Send OTP
@@ -246,5 +241,4 @@ app.delete("/api/notes/:id", async (req, res) => {
   }
 });
 
-// REMOVED app.listen()
-export default app; // ADD THIS LINE
+export default app;
